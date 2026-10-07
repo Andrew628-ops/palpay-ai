@@ -33,3 +33,8 @@ class SubmissionResponse(BaseModel):
     ai_analysis: str | None = None
     ai_recommendation: str | None = None 
     submitted_at: datetime
+
+class AIReviewResponse(BaseModel):
+    recommendation: str
+    confidence: float
+    analysis: str
