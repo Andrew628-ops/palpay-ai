@@ -4,6 +4,6 @@ from app.models import Base
 Base.metadata.create_all(bind=engine)
 from app.routers.rules import router as payment_router
 
-app = FastAPI()
+app = FastAPI(title="PalPay AI API", description="API for managing SmartPay automated payment rules", version="1.0.0")
 
 app.include_router(payment_router, prefix="/api/rules", tags=["smartpay"])
