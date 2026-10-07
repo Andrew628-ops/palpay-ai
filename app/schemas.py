@@ -29,7 +29,7 @@ class SubmissionResponse(BaseModel):
     id: int
     rule_id: int
     description: str
-    file_url: str
-    ai_analysis: str | None
-    ai_recommendation: str | None
+    file_url: str | None = None
+    ai_analysis: str | None = None
+    ai_recommendation: str | None = None 
     submitted_at: datetime
