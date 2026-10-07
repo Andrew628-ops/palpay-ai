@@ -1,5 +1,6 @@
 from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
+from typing import Optional
 
 class SmartPayRuleCreate(BaseModel):
     recipient_name: str
@@ -17,5 +18,5 @@ class SmartPayRuleResponse(BaseModel):
     description: str
     condition: str
     status: str
-    ai_confidence: float
+    ai_confidence: Optional[float] = None
     created_at: datetime
