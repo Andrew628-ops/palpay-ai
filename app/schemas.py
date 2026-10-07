@@ -2,7 +2,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
 
 class SmartPayRuleCreate(BaseModel):
-    reciepient_name: str
+    recipient_name: str
     amount: float = Field(gt=0)
     currency: str
     description: str
@@ -11,7 +11,7 @@ class SmartPayRuleCreate(BaseModel):
 class SmartPayRuleResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
-    reciepient_name: str
+    recipient_name: str
     amount: float = Field(gt=0)
     currency: str
     description: str
