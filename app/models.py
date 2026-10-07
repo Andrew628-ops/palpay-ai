@@ -1,15 +1,29 @@
-from datetime import datetime
-from database import Base
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Column, Integer, String, Float, DateTime
+from datetime import datetime, timezone
+
+from app.database import Base
+
 
 class SmartPayRule(Base):
-    __tablename__ = "smartpay_rules"
+    __tablename__ = "smart_pay_rules"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    amount: Mapped[float] = mapped_column(nullable=False)
-    currency: Mapped[str] = mapped_column(nullable=False)
-    description: Mapped[str] = mapped_column(nullable=False)
-    condition: Mapped[str] = mapped_column(nullable=False)
-    status: Mapped[str] = mapped_column(nullable=False)
-    ai_confidence: Mapped[float] = mapped_column(nullable=True)
-    created_at: Mapped[datetime] = mapped_column(nullable=False)
+    id = Column(Integer, primary_key=True, index=True)
+    recipient_name = Column(String, nullable=False)
+    amount = Column(Float, nullable=False)
+    currency = Column(String, default="USD", nullable=False)
+    description = Column(String, nullable=False)
+    condition = Column(String, nullable=False)
+
+    status = Column(
+        String,
+        default="WAITING_FOR_CONDITION",
+        nullable=False
+    )
+
+    ai_confidence = Column(Float, nullable=True)
+
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False
+    )
