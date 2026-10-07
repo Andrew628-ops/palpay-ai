@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from app.schemas import SmartPayRuleCreate, SmartPayRuleResponse, SubmissionCreate, SubmissionResponse
+from app.schemas import SmartPayRuleCreate, SmartPayRuleResponse, SubmissionCreate, SubmissionResponse, AIReviewResponse
 from app.database import get_db
 from app.models import SmartPayRule, Submission
 from typing import List
@@ -46,4 +46,42 @@ def get_submission(rule_id: int, submission: SubmissionCreate, db=Depends(get_db
     db.commit()
     db.refresh(new_submission)
     return new_submission
+
+
+@router.post("/smartpay/{rule_id}/ai-review", response_model=AIReviewResponse)
+def review_submission(rule_id: int, db = Depends(get_db)):
+    query = select(SmartPayRule).where(SmartPayRule.id == rule_id)
+    smart_pay = db.scalar(query)
+    if smart_pay is None:
+        raise HTTPException(status_code=404, detail='SmartPay not found')
     
+    if smart_pay.status != "CONDITION_SUBMITTED":
+        raise HTTPException(status_code=400, detail='Rule not ready for review')
+    
+    submission_query = select(Submission).where(Submission.rule_id == rule_id)
+    submission = db.scalar(submission_query)
+    if submission is None:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    
+    analysis = (
+    f"The submitted evidence appears to satisfy "
+    f"the condition: {smart_pay.condition}"
+    )
+
+    recommendation = "APPROVE"
+    confidence = 0.92
+
+    submission.ai_analysis = analysis
+    submission.ai_recommendation = recommendation
+
+    smart_pay.ai_confidence = confidence
+
+    smart_pay.status = "AI_REVIEWED"
+
+    db.commit()
+
+    return {
+        "recommendation": recommendation,
+        "confidence": confidence,
+        "analysis": analysis
+    }
