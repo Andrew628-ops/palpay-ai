@@ -20,3 +20,4 @@ class SmartPayRuleResponse(BaseModel):
     status: str
     ai_confidence: Optional[float] = None
     created_at: datetime
+
