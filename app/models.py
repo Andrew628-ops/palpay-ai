@@ -27,3 +27,12 @@ class SmartPayRule(Base):
         default=lambda: datetime.now(timezone.utc),
         nullable=False
     )
+
+class Submission(Base):
+    id = Column(Integer, primary_key=True, index=True)
+    rule_id = Column(Integer, primary_key=True, index=True)
+    description = Column(String, nullable=False)
+    file_url = Column(String, nullable=False)
+    ai_analysis = Column(String, nullable=True)
+    ai_recommendation = Column(String, nullable=True)
+    submitted_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
