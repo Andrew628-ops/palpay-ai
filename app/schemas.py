@@ -21,3 +21,15 @@ class SmartPayRuleResponse(BaseModel):
     ai_confidence: Optional[float] = None
     created_at: datetime
 
+class SubmissionCreate(BaseModel):
+    description: str
+    file_url: str
+
+class SubmissionResponse(BaseModel):
+    id: int
+    rule_id: int
+    description: str
+    file_url: str
+    ai_analysis: str | None
+    ai_recommendation: str | None
+    submitted_at: datetime
