@@ -23,7 +23,7 @@ class SmartPayRuleResponse(BaseModel):
 
 class SubmissionCreate(BaseModel):
     description: str
-    file_url: str
+    file_url: str | None = None
 
 class SubmissionResponse(BaseModel):
     id: int
