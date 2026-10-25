@@ -1,9 +1,27 @@
+
+import os
+from pathlib import Path
+
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
-engine = create_engine('sqlite:///./palpay.db')
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from the project root
+load_dotenv(BASE_DIR / ".env")
+
+# Read DATABASE_URL from .env
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    f"sqlite:///{BASE_DIR / 'palpay.db'}"
+)
+
+# Create the database engine
+engine = create_engine(DATABASE_URL)
 
 SessionLocal = sessionmaker(bind=engine)
+
 
 class Base(DeclarativeBase):
     pass
