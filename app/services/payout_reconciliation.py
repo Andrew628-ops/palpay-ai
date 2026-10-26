@@ -65,9 +65,45 @@ def reconcile_payout(db: Session, payout: PayoutRecord):
     payout.paypal_item_status = item_status
 
     # Mark paid only when both statuses confirm success
+    
     if batch_status == "SUCCESS" and item_status == "SUCCESS":
         payout.status = "PAYOUT_COMPLETED"
         rule.status = "PAID"
+
+    elif item_status == "FAILED":
+        if rule.status == "PAID":
+            raise ValueError(
+                "Unexpected failed status for an already paid rule"
+            )
+
+        
+    if item_status == "REFUNDED":
+        payout.status = "PAYOUT_REFUNDED"
+        rule.status = "PAYOUT_REFUNDED"
+    
+    elif item_status == "RETURNED":
+        payout.status = "PAYOUT_RETURNED"
+        rule.status = "PAYOUT_RETURNED"
+    
+    elif item_status == "FAILED":
+        if rule.status == "PAID":
+            raise ValueError(
+                "Unexpected failure for an already paid rule"
+            )
+    
+        payout.status = "PAYOUT_FAILED"
+        rule.status = "PAYOUT_FAILED"
+    
+    elif batch_status == "SUCCESS" and item_status == "SUCCESS":
+        if rule.status in {"PAYOUT_REFUNDED", "PAYOUT_RETURNED"}:
+            raise ValueError(
+                "Cannot overwrite a recorded reversal with success"
+            )
+    
+        payout.status = "PAYOUT_COMPLETED"
+        rule.status = "PAID"
+
+
 
     # Do not commit here. The caller owns the transaction.
     return {
