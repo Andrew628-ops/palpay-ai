@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
+from app.services.webhook_processing import process_saved_webhook
 
 from app.database import get_db
 from app.models import PayPalWebhookEvent
@@ -120,7 +121,7 @@ async def receive_paypal_webhook(
     if not isinstance(event_type, str) or not event_type:
         raise HTTPException(400, "Missing event type")
 
-    # 6. Save verified event to database
+    # 6. Save verified event to database  
     try:
         db.add(
             PayPalWebhookEvent(
@@ -134,15 +135,31 @@ async def receive_paypal_webhook(
 
     except IntegrityError:
         db.rollback()
-        return {
-            "received": True,
-            "duplicate": True
-        }
+
+        # Only treat this as a duplicate if it exists
+        if db.get(PayPalWebhookEvent, event_id) is None:
+            raise HTTPException(
+                500,
+                "Failed to store webhook event"
+            )
+
+    # Process new events and retry saved events
+    try:
+        processing_status = await run_in_threadpool(
+            process_saved_webhook,
+            event_id
+        )
+
+    except (httpx.HTTPError, ValueError):
+        raise HTTPException(
+            503,
+            "Webhook saved, but reconciliation is pending"
+        )
 
     return {
         "received": True,
         "verified": True,
         "event_id": event_id,
         "event_type": event_type,
-        "status": "RECEIVED"
+        "status": processing_status
     }
