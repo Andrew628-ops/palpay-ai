@@ -1,6 +1,7 @@
 
 import { useState } from 'react'
 import './App.css'
+import CreateSmartPayForm from './components/CreateSmartPayForm'
 
 function App() {
   const [ruleId, setRuleId] = useState('3')
@@ -36,43 +37,93 @@ function App() {
     }
   }
 
-  return (
-    <main className="dashboard">
-      <h1>PalPay AI</h1>
-      <p>Intelligent Conditional Payments</p>
+  
+return (
+  <div className="app-layout">
 
-      <h2>SmartPay Dashboard</h2>
+    {/* Sidebar */}
+    <aside className="sidebar">
+      <h2>PalPay AI</h2>
+      <p>Smart Payments</p>
 
-      <form onSubmit={fetchSmartPay}>
-        <label htmlFor="rule-id">SmartPay Rule ID</label>
+      <nav className="sidebar-nav">
+        <span className="active">Dashboard</span>
+        <span>Payments</span>
+        <span>AI Reviews</span>
+        <span>Settings</span>
+      </nav>
+    </aside>
 
-        <input
-          id="rule-id"
-          type="number"
-          min="1"
-          required
-          value={ruleId}
-          onChange={(e) => setRuleId(e.target.value)}
-        />
+    {/* Main Dashboard */}
+    <main className="main-content">
 
-        <button type="submit" disabled={loading}>
-          {loading ? 'Loading...' : 'Find Payment'}
-        </button>
-      </form>
+      <header className="dashboard-header">
+        <div>
+          <h1>Dashboard</h1>
+          <p>Manage your intelligent conditional payments.</p>
+        </div>
+      </header>
 
-      {error && <p role="alert">{error}</p>}
+      <CreateSmartPayForm
+        onCreated={(newRule) => {
+          setRuleId(String(newRule.id))
+          setRule(newRule)
+        }}
+      />
 
+      {/* Payment Search */}
+      <section className="search-section">
+        <h2>Find SmartPay Payment</h2>
+
+        <form onSubmit={fetchSmartPay}>
+          <input
+            type="number"
+            min="1"
+            required
+            value={ruleId}
+            onChange={(e) => setRuleId(e.target.value)}
+            placeholder="Enter Rule ID"
+            aria-label="SmartPay Rule ID"
+          />
+
+          <button type="submit" disabled={loading}>
+            {loading ? 'Loading...' : 'Find Payment'}
+          </button>
+        </form>
+
+        {error && <p role="alert">{error}</p>}
+      </section>
+
+      {/* Payment Details */}
       {rule && (
         <section className="payment-card">
           <h2>Payment #{rule.id}</h2>
+
+          <div className="payment-amount">
+            {new Intl.NumberFormat('en-US', {
+              style: 'currency',
+              currency: rule.currency
+            }).format(rule.amount)}
+          </div>
+
           <p><strong>Recipient:</strong> {rule.recipient_name}</p>
-          <p><strong>Amount:</strong> {rule.amount} {rule.currency}</p>
-          <p><strong>Status:</strong> {rule.status}</p>
+
+          <p>
+            <strong>Status: </strong>
+            <span className={`status-badge ${rule.status === 'PAID' ? 'paid' : 'pending'}`}>
+              {rule.status.replaceAll('_', ' ')}
+            </span>
+          </p>
+
+          <p><strong>Description:</strong> {rule.description}</p>
           <p><strong>Condition:</strong> {rule.condition}</p>
         </section>
       )}
+
     </main>
-  )
+  </div>
+)
+
 }
 
 export default App
