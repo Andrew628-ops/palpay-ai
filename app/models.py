@@ -102,3 +102,5 @@ class PayPalWebhookEvent(Base):
         default=lambda: datetime.now(timezone.utc),
         nullable=False
     )
+    processing_started_at = Column(DateTime, nullable=True)
+    processing_token = Column(String, nullable=True)
