@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Numeric
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Numeric, Text
 from datetime import datetime, timezone
 
 from app.database import Base
@@ -77,6 +77,27 @@ class PayoutRecord(Base):
     paypal_item_status = Column(String, nullable=True)
 
     created_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False
+    )
+
+
+
+class PayPalWebhookEvent(Base):
+    __tablename__ = "paypal_webhook_events"
+
+    event_id = Column(String, primary_key=True)
+    event_type = Column(String, nullable=False)
+    payload_json = Column(Text, nullable=False)
+
+    status = Column(
+        String,
+        default="RECEIVED",
+        nullable=False
+    )
+
+    received_at = Column(
         DateTime,
         default=lambda: datetime.now(timezone.utc),
         nullable=False
