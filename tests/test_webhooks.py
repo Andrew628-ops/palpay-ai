@@ -1679,7 +1679,8 @@ def test_duplicate_payment_execution(monkeypatch, tmp_path):
         url = f"/api/rules/smartpay/{rule_id}/pay"
 
         headers = {
-            "x-approval-token": "test-approval-token"
+            "x-approval-token": "test-approval-token",
+            "x-expected-receiver": "receiver@example.com"
         }
 
         # 6. First payment request
