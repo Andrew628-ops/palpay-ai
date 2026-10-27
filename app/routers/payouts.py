@@ -28,6 +28,7 @@ router = APIRouter()
 def pay_smartpay(
     rule_id: int,
     x_approval_token: str | None = Header(default=None),
+    x_expected_receiver: str | None = Header(default=None),
     db: Session = Depends(get_db)
 ):
     # 1. Verify authorization
@@ -54,6 +55,16 @@ def pay_smartpay(
 
     if not receiver:
         raise HTTPException(503, "Sandbox receiver is missing")
+    
+    if (
+        not x_expected_receiver
+        or x_expected_receiver.strip().casefold()
+           != receiver.strip().casefold()
+    ):
+        raise HTTPException(
+            409,
+            "Sandbox receiver confirmation mismatch"
+        )
 
     # 3. Find and validate the rule
     smart_pay = db.get(SmartPayRule, rule_id)
@@ -398,3 +409,55 @@ def verify_approval_token(token: str | None):
             detail="Unauthorized"
         )
 
+
+
+@router.get("/smartpay/{rule_id}/payout-preview")
+def get_payout_preview(
+    rule_id: int,
+    x_approval_token: str | None = Header(default=None),
+    db: Session = Depends(get_db)
+):
+    # Verify the demo operator
+    verify_approval_token(x_approval_token)
+
+    # Sandbox only
+    base_url = os.getenv(
+        "PAYPAL_BASE_URL",
+        "https://api-m.sandbox.paypal.com"
+    ).rstrip("/")
+
+    if base_url != "https://api-m.sandbox.paypal.com":
+        raise HTTPException(503, "Sandbox only")
+
+    rule = db.get(SmartPayRule, rule_id)
+
+    if rule is None:
+        raise HTTPException(404, "SmartPay rule not found")
+
+    if rule.status != "USER_APPROVED":
+        raise HTTPException(409, "Rule is not ready for payout")
+
+    # Check whether a payout already exists
+    existing_payout = db.scalar(
+        select(PayoutRecord.id).where(
+            PayoutRecord.rule_id == rule_id
+        )
+    )
+
+    if existing_payout is not None:
+        raise HTTPException(409, "Payout already requested")
+
+    receiver = os.getenv("PAYPAL_SANDBOX_RECEIVER_EMAIL")
+
+    if not receiver:
+        raise HTTPException(503, "Sandbox receiver missing")
+
+    return {
+        "rule_id": rule.id,
+        "recipient_name": rule.recipient_name,
+        "receiver_email": receiver,
+        "amount": rule.amount,
+        "currency": rule.currency,
+        "status": rule.status,
+        "environment": "SANDBOX"
+    }
