@@ -2,6 +2,10 @@
 import { useState } from 'react'
 import './App.css'
 import CreateSmartPayForm from './components/CreateSmartPayForm'
+import EvidenceSubmissionForm from './components/EvidenceSubmissionForm'
+import AIReview from './components/AIReview'
+import HumanApproval from './components/HumanApproval'
+import PaymentTracking from './components/PaymentTracking'
 
 function App() {
   const [ruleId, setRuleId] = useState('3')
@@ -119,6 +123,111 @@ return (
           <p><strong>Condition:</strong> {rule.condition}</p>
         </section>
       )}
+
+
+{rule && rule.status === 'WAITING_FOR_CONDITION' && (
+  <EvidenceSubmissionForm
+    ruleId={rule.id}
+    onSubmitted={async () => {
+      try {
+        const response = await fetch(
+          `/api/rules/smartpay/${rule.id}`
+        )
+
+        if (!response.ok) {
+          throw new Error('Unable to refresh payment')
+        }
+
+        const updatedRule = await response.json()
+        setRule(updatedRule)
+
+      } catch {
+        setError(
+          'Evidence was submitted, but the payment could not be refreshed. Use Find Payment to reload it.'
+        )
+      }
+    }}
+  />
+)}
+
+
+{rule && [
+  'CONDITION_SUBMITTED',
+  'AWAITING_USER_APPROVAL',
+  'AI_REJECTED',
+  'NEEDS_REVIEW'
+].includes(rule.status) && (
+  <AIReview
+    key={rule.id}
+    rule={rule}
+    onReviewed={async () => {
+      const response = await fetch(
+        `/api/rules/smartpay/${rule.id}`
+      )
+
+      if (!response.ok) {
+        throw new Error('Unable to refresh payment status')
+      }
+
+      const updatedRule = await response.json()
+      setRule(updatedRule)
+    }}
+  />
+)}
+
+
+{rule && [
+  'AWAITING_USER_APPROVAL',
+  'USER_APPROVED'
+].includes(rule.status) && (
+  <HumanApproval
+    key={rule.id}
+    rule={rule}
+    onApproved={async () => {
+      const response = await fetch(
+        `/api/rules/smartpay/${rule.id}`
+      )
+
+      if (!response.ok) {
+        throw new Error('Unable to refresh payment')
+      }
+
+      const updatedRule = await response.json()
+      setRule(updatedRule)
+    }}
+  />
+)}
+
+
+{rule && [
+  'USER_APPROVED',
+  'PAYOUT_REQUESTED',
+  'PAYOUT_SUBMITTED',
+  'PAYOUT_UNKNOWN',
+  'PAYOUT_DENIED',
+  'PAID',
+  'PAYOUT_FAILED',
+  'PAYOUT_RETURNED',
+  'PAYOUT_REFUNDED'
+].includes(rule.status) && (
+  <PaymentTracking
+    key={rule.id}
+    rule={rule}
+    onRefresh={async () => {
+      const response = await fetch(
+        `/api/rules/smartpay/${rule.id}`
+      )
+
+      if (!response.ok) {
+        throw new Error('Unable to retrieve payment status')
+      }
+
+      const updatedRule = await response.json()
+      setRule(updatedRule)
+    }}
+  />
+)}
+
 
     </main>
   </div>

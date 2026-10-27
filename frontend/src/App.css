@@ -189,3 +189,218 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+
+.evidence-section {
+  background: white;
+  padding: 25px;
+  border-radius: 14px;
+  margin-top: 25px;
+  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.04);
+}
+
+.evidence-section h2 {
+  margin-top: 0;
+  color: #102c56;
+}
+
+.evidence-section p {
+  color: #64748b;
+}
+
+.evidence-form {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+}
+
+.evidence-form label {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.evidence-form textarea,
+.evidence-form input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.evidence-form textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.evidence-form button {
+  align-self: flex-start;
+}
+
+.evidence-section .success-message {
+  color: #166534;
+}
+
+.evidence-section .error-message {
+  color: #b91c1c;
+}
+
+
+.ai-review-section {
+  background: white;
+  padding: 25px;
+  border-radius: 14px;
+  margin-top: 25px;
+  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.04);
+}
+
+.ai-review-section h2 {
+  color: #102c56;
+  margin-top: 0;
+}
+
+.ai-review-section > p {
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.ai-review-section button {
+  background: #2563eb;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.ai-review-section button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ai-result {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.ai-result h3 {
+  margin-top: 0;
+  color: #1e40af;
+}
+
+.ai-result p {
+  line-height: 1.7;
+}
+
+
+.approval-section {
+  background: white;
+  padding: 25px;
+  border-radius: 14px;
+  margin-top: 25px;
+  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.04);
+}
+
+.approval-section h2 {
+  color: #102c56;
+  margin-top: 0;
+}
+
+.approval-section > p {
+  color: #64748b;
+}
+
+.approval-details {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 15px 20px;
+  margin: 20px 0;
+}
+
+.approval-details p {
+  line-height: 1.6;
+}
+
+.approval-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.approval-form label {
+  font-weight: 600;
+}
+
+.approval-form input {
+  width: 100%;
+  max-width: 420px;
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+}
+
+.approval-form button {
+  background: #2563eb;
+}
+
+.approval-form small {
+  color: #64748b;
+}
+
+.approval-section .success-message {
+  color: #166534;
+}
+
+.approval-section .error-message {
+  color: #b91c1c;
+}
+
+
+.tracking-section {
+  background: white;
+  padding: 25px;
+  border-radius: 14px;
+  margin-top: 25px;
+  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.04);
+}
+
+.tracking-section h2 {
+  color: #102c56;
+}
+
+.tracking-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 20px;
+  border-radius: 10px;
+  margin: 20px 0;
+}
+
+.tracking-card p {
+  line-height: 1.7;
+}
+
+.tracking-status {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.tracking-section button {
+  margin-bottom: 15px;
+}
+
+.tracking-section small {
+  display: block;
+  color: #64748b;
+  line-height: 1.5;
+}
