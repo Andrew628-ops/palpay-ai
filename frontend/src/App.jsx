@@ -6,6 +6,7 @@ import EvidenceSubmissionForm from './components/EvidenceSubmissionForm'
 import AIReview from './components/AIReview'
 import HumanApproval from './components/HumanApproval'
 import PaymentTracking from './components/PaymentTracking'
+import SandboxPayout from './components/SandboxPayout'
 
 function App() {
   const [ruleId, setRuleId] = useState('3')
@@ -228,6 +229,25 @@ return (
   />
 )}
 
+
+{rule && rule.status === 'USER_APPROVED' && (
+  <SandboxPayout
+    key={rule.id}
+    rule={rule}
+    onPayoutSubmitted={async () => {
+      const response = await fetch(
+        `/api/rules/smartpay/${rule.id}`
+      )
+
+      if (!response.ok) {
+        throw new Error('Unable to refresh payment status')
+      }
+
+      const updatedRule = await response.json()
+      setRule(updatedRule)
+    }}
+  />
+)}
 
     </main>
   </div>
