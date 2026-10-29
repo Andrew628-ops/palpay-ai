@@ -32,7 +32,27 @@ def process_saved_webhook(event_id: str):
             raise ValueError("Webhook event not found")
 
         if event.event_type not in EVENT_EXPECTATIONS:
-            return "STORED"
+            # Atomically mark an unhandled verified event as ignored.
+            db.execute(
+                update(PayPalWebhookEvent)
+                .where(
+                    PayPalWebhookEvent.event_id == event_id,
+                    PayPalWebhookEvent.status == "RECEIVED"
+                )
+                .values(
+                    status="IGNORED",
+                    processing_started_at=None,
+                    processing_token=None
+                )
+            )
+
+            db.commit()
+            db.refresh(event)
+
+            if event.status in {"IGNORED", "PROCESSED", "PROCESSING"}:
+                 return event.status
+
+            raise ValueError("Unexpected webhook state")
 
         now = utc_now()
         cutoff = now - timedelta(minutes=LEASE_MINUTES)
