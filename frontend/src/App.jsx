@@ -9,6 +9,7 @@ import HumanApproval from "./components/HumanApproval";
 import PaymentTracking from "./components/PaymentTracking";
 import SandboxPayout from "./components/SandboxPayout";
 import PaymentHistory from "./components/PaymentHistory";
+import DashboardAnalytics from "./components/DashboardAnalytics";
 
 const PAGES = {
   dashboard: {
@@ -118,6 +119,11 @@ function App() {
           </div>
         </header>
 
+        {/* Dashboard: Payment Analytics */}
+        {activePage === "dashboard" && (
+          <DashboardAnalytics />
+        )}
+        
         {/* Dashboard: Create SmartPay */}
         {activePage === "dashboard" && (
           <CreateSmartPayForm
