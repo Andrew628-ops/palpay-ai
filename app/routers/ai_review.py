@@ -26,7 +26,13 @@ def review_smartpay_submission(rule_id: int, db=Depends(get_db)):
     if smart_pay.status != "CONDITION_SUBMITTED":
         raise HTTPException(status_code=400, detail="Rule not ready for review")
 
-    submission_query = select(Submission).where(Submission.rule_id == rule_id)
+    submission_query = (
+    select(Submission)
+    .where(Submission.rule_id == rule_id)
+    .order_by(Submission.id.desc())
+    .limit(1)
+    )
+
     submission = db.scalar(submission_query)
 
     if submission is None:
