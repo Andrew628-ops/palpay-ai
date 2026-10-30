@@ -10,6 +10,7 @@ import PaymentTracking from "./components/PaymentTracking";
 import SandboxPayout from "./components/SandboxPayout";
 import PaymentHistory from "./components/PaymentHistory";
 import DashboardAnalytics from "./components/DashboardAnalytics";
+import ReviewQueue from "./components/ReviewQueue";
 
 const PAGES = {
   dashboard: {
@@ -86,6 +87,21 @@ function App() {
     }
   }
 
+  async function openReviewFromQueue(selectedRuleId) {
+    setRuleId(String(selectedRuleId));
+    setRule(null);
+    setError("");
+    setLoading(true);
+
+    try {
+      await refreshRule(selectedRuleId);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+}
+
   return (
     <div className="app-layout">
       {/* Sidebar */}
@@ -119,11 +135,17 @@ function App() {
           </div>
         </header>
 
+        {activePage === "reviews" && (
+        <ReviewQueue
+          onSelectRule={openReviewFromQueue}
+        />
+        )}
+
         {/* Dashboard: Payment Analytics */}
         {activePage === "dashboard" && (
           <DashboardAnalytics />
         )}
-        
+
         {/* Dashboard: Create SmartPay */}
         {activePage === "dashboard" && (
           <CreateSmartPayForm
@@ -221,15 +243,40 @@ function App() {
 
         {/* AI Review: Available on Dashboard and AI Reviews */}
         {showRuleLookup &&
-          rule &&
-          REVIEW_STATUSES.includes(rule.status) && (
+          rule?.status === "CONDITION_SUBMITTED" && (
             <AIReview
               key={rule.id}
               rule={rule}
               onReviewed={() => refreshRule(rule.id)}
             />
-          )}
+        )}
 
+        {activePage === "reviews" &&
+        rule &&
+        ["NEEDS_REVIEW", "AI_REJECTED"].includes(rule.status) && (
+          <section className="payment-card">
+            <h2>
+              {rule.status === "NEEDS_REVIEW"
+                ? "Human Attention Required"
+                : "Evidence Rejected"}
+            </h2>
+              
+            <p>
+              Rule #{rule.id} cannot currently undergo another
+              AI review.
+            </p>
+              
+            <p>
+              A new evidence submission or an authorized human
+              review workflow is required before proceeding.
+            </p>
+              
+            <p>
+              No payment will be initiated from this review state.
+            </p>
+          </section>
+        )}
+        
         {/* Dashboard: Human approval */}
         {activePage === "dashboard" &&
           rule &&
