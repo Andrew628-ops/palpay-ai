@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Header, Query
-from sqlalchemy import select
+from sqlalchemy import select, func
+from decimal import Decimal
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -53,4 +54,66 @@ def get_payment_history(
     return {
         "count": len(payments),
         "payments": payments
+    }
+
+
+@router.get("/summary")
+def get_payment_summary(
+    x_approval_token: str | None = Header(default=None),
+    db: Session = Depends(get_db),
+):
+    # Protect analytics with our demo operator token.
+    verify_approval_token(x_approval_token)
+
+    # Count all SmartPay rules.
+    total_rules = db.scalar(
+        select(func.count(SmartPayRule.id))
+    ) or 0
+
+    # Count rules awaiting human approval.
+    awaiting_approval = db.scalar(
+        select(func.count(SmartPayRule.id)).where(
+            SmartPayRule.status == "AWAITING_USER_APPROVAL"
+        )
+    ) or 0
+
+    # Only include payouts confirmed as completed.
+    completed_conditions = (
+        PayoutRecord.status == "PAYOUT_COMPLETED",
+        SmartPayRule.status == "PAID",
+    )
+
+    completed_payouts = db.scalar(
+        select(func.count(PayoutRecord.id))
+        .join(
+            SmartPayRule,
+            PayoutRecord.rule_id == SmartPayRule.id
+        )
+        .where(*completed_conditions)
+    ) or 0
+
+    # Sum completed USD payments only.
+    # Never mix currencies in a single monetary total.
+    total_usd = db.scalar(
+        select(func.sum(PayoutRecord.amount))
+        .join(
+            SmartPayRule,
+            PayoutRecord.rule_id == SmartPayRule.id
+        )
+        .where(
+            *completed_conditions,
+            PayoutRecord.currency == "USD"
+        )
+    )
+
+    completed_volume_usd = Decimal(
+        str(total_usd if total_usd is not None else "0")
+    ).quantize(Decimal("0.01"))
+
+    return {
+        "total_rules": total_rules,
+        "completed_payouts": completed_payouts,
+        "awaiting_approval": awaiting_approval,
+        "completed_volume_usd": str(completed_volume_usd),
+        "environment": "SANDBOX",
     }
