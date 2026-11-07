@@ -8,6 +8,7 @@ from app.routers.payouts import router as payout_router
 from app.routers.webhooks import router as webhook_router
 from app.routers.payment_history import router as history_router
 from app.routers.review_queue import router as review_queue_router
+from app.routers.submission_history import router as submission_history_router
 
 app = FastAPI(title="PalPay AI API", description="API for managing SmartPay automated payment rules", version="1.0.0")
 
@@ -17,3 +18,4 @@ app.include_router(payout_router, prefix="/api/rules", tags=["PayPal Payments"])
 app.include_router(webhook_router, prefix="/api/webhooks", tags=["PayPal Webhooks"])
 app.include_router(history_router, prefix="/api/payments", tags=["Payment History"])
 app.include_router(review_queue_router, prefix="/api/reviews", tags=["AI Review Management"])
+app.include_router(submission_history_router, prefix="/api/rules", tags=["smartpay"])
