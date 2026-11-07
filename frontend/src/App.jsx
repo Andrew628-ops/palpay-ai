@@ -4,6 +4,7 @@ import "./App.css";
 
 import CreateSmartPayForm from "./components/CreateSmartPayForm";
 import EvidenceSubmissionForm from "./components/EvidenceSubmissionForm";
+import EvidenceResubmissionForm from "./components/EvidenceResubmissionForm";
 import AIReview from "./components/AIReview";
 import HumanApproval from "./components/HumanApproval";
 import PaymentTracking from "./components/PaymentTracking";
@@ -11,6 +12,7 @@ import SandboxPayout from "./components/SandboxPayout";
 import PaymentHistory from "./components/PaymentHistory";
 import DashboardAnalytics from "./components/DashboardAnalytics";
 import ReviewQueue from "./components/ReviewQueue";
+import SubmissionHistory from "./components/SubmissionHistory";
 
 const PAGES = {
   dashboard: {
@@ -33,9 +35,9 @@ const PAGES = {
 
 const REVIEW_STATUSES = [
   "CONDITION_SUBMITTED",
-  "AWAITING_USER_APPROVAL",
-  "AI_REJECTED",
   "NEEDS_REVIEW",
+  "AI_REJECTED",
+  "AWAITING_USER_APPROVAL",
 ];
 
 const TRACKING_STATUSES = [
@@ -60,17 +62,26 @@ function App() {
   const showRuleLookup =
     activePage === "dashboard" || activePage === "reviews";
 
+  // Refresh the currently selected SmartPay rule.
   async function refreshRule(id) {
-    const response = await fetch(`/api/rules/smartpay/${id}`);
+    const response = await fetch(
+      `/api/rules/smartpay/${id}`
+    );
 
     if (!response.ok) {
-      throw new Error("Unable to refresh payment status");
+      throw new Error(
+        `Unable to refresh payment (HTTP ${response.status})`
+      );
     }
 
     const updatedRule = await response.json();
+
     setRule(updatedRule);
+
+    return updatedRule;
   }
 
+  // Search for a SmartPay rule using its ID.
   async function fetchSmartPay(event) {
     event.preventDefault();
 
@@ -87,6 +98,7 @@ function App() {
     }
   }
 
+  // Open a rule selected from the AI Review Queue.
   async function openReviewFromQueue(selectedRuleId) {
     setRuleId(String(selectedRuleId));
     setRule(null);
@@ -100,21 +112,26 @@ function App() {
     } finally {
       setLoading(false);
     }
-}
+  }
 
   return (
     <div className="app-layout">
-      {/* Sidebar */}
+      {/* SIDEBAR */}
       <aside className="sidebar">
         <h2>PalPay AI</h2>
         <p>Smart Payments</p>
 
-        <nav className="sidebar-nav" aria-label="Main navigation">
+        <nav
+          className="sidebar-nav"
+          aria-label="Main navigation"
+        >
           {Object.entries(PAGES).map(([page, config]) => (
             <button
               key={page}
               type="button"
-              className={activePage === page ? "active" : ""}
+              className={
+                activePage === page ? "active" : ""
+              }
               aria-current={
                 activePage === page ? "page" : undefined
               }
@@ -126,8 +143,10 @@ function App() {
         </nav>
       </aside>
 
+      {/* MAIN CONTENT */}
       <main className="main-content">
-        {/* Page heading */}
+
+        {/* PAGE HEADER */}
         <header className="dashboard-header">
           <div>
             <h1>{PAGES[activePage].label}</h1>
@@ -135,18 +154,12 @@ function App() {
           </div>
         </header>
 
-        {activePage === "reviews" && (
-        <ReviewQueue
-          onSelectRule={openReviewFromQueue}
-        />
-        )}
-
-        {/* Dashboard: Payment Analytics */}
+        {/* DASHBOARD ANALYTICS */}
         {activePage === "dashboard" && (
           <DashboardAnalytics />
         )}
 
-        {/* Dashboard: Create SmartPay */}
+        {/* CREATE SMARTPAY RULE */}
         {activePage === "dashboard" && (
           <CreateSmartPayForm
             onCreated={(newRule) => {
@@ -157,7 +170,14 @@ function App() {
           />
         )}
 
-        {/* Rule search: Available on Dashboard and AI Reviews */}
+        {/* AI REVIEW QUEUE */}
+        {activePage === "reviews" && (
+          <ReviewQueue
+            onSelectRule={openReviewFromQueue}
+          />
+        )}
+
+        {/* SMARTPAY RULE SEARCH */}
         {showRuleLookup && (
           <>
             <section className="search-section">
@@ -176,14 +196,22 @@ function App() {
                   aria-label="SmartPay Rule ID"
                 />
 
-                <button type="submit" disabled={loading}>
-                  {loading ? "Loading..." : "Find Payment"}
+                <button
+                  type="submit"
+                  disabled={loading}
+                >
+                  {loading
+                    ? "Loading..."
+                    : "Find Payment"}
                 </button>
               </form>
 
-              {error && <p role="alert">{error}</p>}
+              {error && (
+                <p role="alert">{error}</p>
+              )}
             </section>
 
+            {/* SELECTED PAYMENT DETAILS */}
             {rule && (
               <section className="payment-card">
                 <h2>Payment #{rule.id}</h2>
@@ -196,14 +224,18 @@ function App() {
                 </div>
 
                 <p>
-                  <strong>Recipient:</strong> {rule.recipient_name}
+                  <strong>Recipient: </strong>
+                  {rule.recipient_name}
                 </p>
 
                 <p>
                   <strong>Status: </strong>
+
                   <span
                     className={`status-badge ${
-                      rule.status === "PAID" ? "paid" : "pending"
+                      rule.status === "PAID"
+                        ? "paid"
+                        : "pending"
                     }`}
                   >
                     {rule.status.replaceAll("_", " ")}
@@ -211,18 +243,20 @@ function App() {
                 </p>
 
                 <p>
-                  <strong>Description:</strong> {rule.description}
+                  <strong>Description: </strong>
+                  {rule.description}
                 </p>
 
                 <p>
-                  <strong>Condition:</strong> {rule.condition}
+                  <strong>Condition: </strong>
+                  {rule.condition}
                 </p>
               </section>
             )}
           </>
         )}
 
-        {/* Dashboard: Evidence submission */}
+        {/* INITIAL EVIDENCE SUBMISSION */}
         {activePage === "dashboard" &&
           rule?.status === "WAITING_FOR_CONDITION" && (
             <EvidenceSubmissionForm
@@ -233,134 +267,188 @@ function App() {
                   await refreshRule(rule.id);
                 } catch {
                   setError(
-                    "Evidence was submitted, but the payment could not " +
-                    "be refreshed. Use Find Payment to reload it."
+                    "Evidence was submitted, but the " +
+                    "payment could not be refreshed. " +
+                    "Use Find Payment to reload it."
                   );
                 }
               }}
             />
           )}
 
-        {/* AI Review: Available on Dashboard and AI Reviews */}
+        {/* GEMINI AI REVIEW */}
         {showRuleLookup &&
           rule?.status === "CONDITION_SUBMITTED" && (
             <AIReview
               key={rule.id}
               rule={rule}
-              onReviewed={() => refreshRule(rule.id)}
+              onReviewed={() =>
+                refreshRule(rule.id)
+              }
             />
-        )}
+          )}
 
+        {/* IMPROVED EVIDENCE RESUBMISSION */}
         {activePage === "reviews" &&
-        rule &&
-        ["NEEDS_REVIEW", "AI_REJECTED"].includes(rule.status) && (
-          <section className="payment-card">
-            <h2>
-              {rule.status === "NEEDS_REVIEW"
-                ? "Human Attention Required"
-                : "Evidence Rejected"}
-            </h2>
-              
-            <p>
-              Rule #{rule.id} cannot currently undergo another
-              AI review.
-            </p>
-              
-            <p>
-              A new evidence submission or an authorized human
-              review workflow is required before proceeding.
-            </p>
-              
-            <p>
-              No payment will be initiated from this review state.
-            </p>
-          </section>
-        )}
-        
-        {/* Dashboard: Human approval */}
-        {activePage === "dashboard" &&
           rule &&
-          ["AWAITING_USER_APPROVAL", "USER_APPROVED"].includes(
+          ["NEEDS_REVIEW", "AI_REJECTED"].includes(
             rule.status
           ) && (
+            <EvidenceResubmissionForm
+              key={rule.id}
+              rule={rule}
+              onSubmitted={() =>
+                refreshRule(rule.id)
+              }
+            />
+          )}
+
+        {/* SUBMISSION HISTORY */}
+        {activePage === "reviews" && rule && (
+          <SubmissionHistory
+            key={`${rule.id}-${rule.status}`}
+            ruleId={rule.id}
+          />
+        )}
+
+        {/* HUMAN APPROVAL INFORMATION */}
+        {activePage === "reviews" &&
+          rule?.status === "AWAITING_USER_APPROVAL" && (
+            <section className="payment-card">
+              <h2>Awaiting Human Approval</h2>
+
+              <p>
+                Gemini has completed the AI review
+                for Rule #{rule.id}.
+              </p>
+
+              <p>
+                Open this rule on the Dashboard to
+                complete the authorized human
+                approval process.
+              </p>
+
+              <p>
+                No payment has been sent by this step.
+              </p>
+            </section>
+          )}
+
+        {/* HUMAN APPROVAL */}
+        {activePage === "dashboard" &&
+          rule &&
+          [
+            "AWAITING_USER_APPROVAL",
+            "USER_APPROVED",
+          ].includes(rule.status) && (
             <HumanApproval
               key={rule.id}
               rule={rule}
-              onApproved={() => refreshRule(rule.id)}
+              onApproved={() =>
+                refreshRule(rule.id)
+              }
             />
           )}
 
-        {/* Dashboard: Payment tracking */}
+        {/* PAYMENT TRACKING */}
         {activePage === "dashboard" &&
           rule &&
-          TRACKING_STATUSES.includes(rule.status) && (
+          TRACKING_STATUSES.includes(
+            rule.status
+          ) && (
             <PaymentTracking
               key={rule.id}
               rule={rule}
-              onRefresh={() => refreshRule(rule.id)}
+              onRefresh={() =>
+                refreshRule(rule.id)
+              }
             />
           )}
 
-        {/* Dashboard: Sandbox payout */}
+        {/* PAYPAL SANDBOX PAYOUT */}
         {activePage === "dashboard" &&
           rule?.status === "USER_APPROVED" && (
             <SandboxPayout
               key={rule.id}
               rule={rule}
-              onPayoutSubmitted={() => refreshRule(rule.id)}
+              onPayoutSubmitted={() =>
+                refreshRule(rule.id)
+              }
             />
           )}
 
-        {/* Payments page */}
-        {activePage === "payments" && <PaymentHistory />}
+        {/* PAYMENTS HISTORY PAGE */}
+        {activePage === "payments" && (
+          <PaymentHistory />
+        )}
 
-        {/* AI Reviews: Informational states */}
+        {/* AI REVIEWS: NO RULE SELECTED */}
         {activePage === "reviews" && !rule && (
           <section className="payment-card">
-            <h2>Select a payment to review</h2>
+            <h2>Select a Payment to Review</h2>
+
             <p>
-              Enter a SmartPay rule ID above and click Find Payment.
+              Load the AI Review Queue and select
+              a SmartPay rule, or enter a rule ID
+              in the search field above.
             </p>
           </section>
         )}
 
+        {/* AI REVIEWS: NOT ELIGIBLE */}
         {activePage === "reviews" &&
           rule &&
-          !REVIEW_STATUSES.includes(rule.status) && (
+          !REVIEW_STATUSES.includes(
+            rule.status
+          ) && (
             <section className="payment-card">
               <h2>AI Review Unavailable</h2>
+
               <p>
                 Rule #{rule.id} currently has status{" "}
-                <strong>{rule.status.replaceAll("_", " ")}</strong>.
+                <strong>
+                  {rule.status.replaceAll("_", " ")}
+                </strong>.
               </p>
+
               <p>
-                An AI review can be requested after the payment
-                condition has been submitted. Use Dashboard for
-                evidence submission and payment approval.
+                The rule is not currently eligible
+                for another AI review.
+              </p>
+
+              <p>
+                Submission History remains available
+                for viewing previous evidence.
               </p>
             </section>
           )}
 
-        {/* Settings: Informational page */}
+        {/* SETTINGS PAGE */}
         {activePage === "settings" && (
           <section className="payment-card">
             <h2>Sandbox Configuration</h2>
+
             <p>
-              PalPay AI is currently configured for PayPal
-              Sandbox development and testing.
+              PalPay AI is currently configured
+              for PayPal Sandbox development
+              and testing.
             </p>
 
             <h3>Payment Security</h3>
+
             <p>
-              The current demo uses an operator approval token.
-              Production deployment will require user login,
-              permission checks, and payment ownership validation.
+              This demo uses an operator approval token.
+              Production deployment will require
+              proper user authentication, permission
+              checks, and payment ownership validation.
             </p>
 
             <h3>Developer Settings</h3>
+
             <p>
-              PayPal API credentials, webhook identifiers,
-              and other secrets are configured on the backend,
+              PayPal API credentials, webhook
+              identifiers, and other secrets
+              are configured on the backend,
               not in this frontend.
             </p>
           </section>
