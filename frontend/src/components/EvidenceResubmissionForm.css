@@ -1,0 +1,69 @@
+
+.resubmit-evidence {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  margin: 24px 0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.resubmit-evidence h2 {
+  color: #102b53;
+  margin-bottom: 10px;
+}
+
+.resubmit-evidence p {
+  color: #64748b;
+  margin-bottom: 20px;
+}
+
+.resubmit-evidence form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.resubmit-evidence label {
+  color: #334155;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.resubmit-evidence input,
+.resubmit-evidence textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font: inherit;
+  box-sizing: border-box;
+}
+
+.resubmit-evidence textarea {
+  resize: vertical;
+}
+
+.resubmit-evidence button {
+  align-self: flex-start;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  cursor: pointer;
+}
+
+.resubmit-evidence button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.resubmit-evidence .resubmit-error {
+  color: #dc2626;
+  margin-top: 12px;
+}
+
+.resubmit-evidence .resubmit-success {
+  color: #15803d;
+  margin-top: 12px;
+}
