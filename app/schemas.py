@@ -1,6 +1,6 @@
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Literal
 
 class SmartPayRuleCreate(BaseModel):
     recipient_name: str
@@ -38,3 +38,41 @@ class AIReviewResponse(BaseModel):
     recommendation: str
     confidence: float
     analysis: str
+
+
+class HumanReviewDecisionCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    decision: Literal[
+        "REQUEST_MORE_EVIDENCE",
+        "REJECT"
+    ]
+
+    reason: str = Field(
+        min_length=10,
+        max_length=2000
+    )
+
+    @field_validator("reason")
+    @classmethod
+    def validate_reason(cls, value: str) -> str:
+        value = value.strip()
+
+        if len(value) < 10:
+            raise ValueError(
+                "Review reason must contain at least 10 characters"
+            )
+
+        return value
+
+
+class HumanReviewDecisionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    rule_id: int
+    submission_id: int
+    decision: str
+    reason: str
+    reviewer_id: str
+    created_at: datetime
