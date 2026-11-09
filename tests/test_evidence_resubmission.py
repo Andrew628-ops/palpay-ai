@@ -1,9 +1,9 @@
 
 import pytest
-
+import os
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, select, update
 from sqlalchemy.orm import sessionmaker
 
 from app.main import app
@@ -219,7 +219,10 @@ def test_ai_reviews_latest_submission(test_env, monkeypatch):
     )
 
     response = client.post(
-        f"/api/rules/smartpay/{rule_id}/ai-review"
+        f"/api/rules/smartpay/{rule_id}/ai-review",
+        headers={
+            "x-approval-token": os.environ["APPROVAL_TOKEN"]
+        }
     )
 
     assert response.status_code == 200, response.text
@@ -239,3 +242,72 @@ def test_ai_reviews_latest_submission(test_env, monkeypatch):
 
         assert submissions[0].ai_analysis == "Original AI analysis"
         assert submissions[1].ai_recommendation == "APPROVE"
+
+
+def test_ai_review_rejects_outdated_result(
+    test_env, monkeypatch
+):
+    client, SessionLocal = test_env
+
+    rule_id = create_existing_rule(
+        SessionLocal,
+        "NEEDS_REVIEW"
+    )
+
+    response = resubmit(client, rule_id)
+    assert response.status_code == 201
+
+    with SessionLocal() as db:
+
+        def fake_ai_review(
+            condition,
+            submission_description,
+            file_url
+        ):
+            # Simulate another review changing
+            # the rule while Gemini is processing.
+            changed = db.execute(
+                update(SmartPayRule)
+                .where(
+                    SmartPayRule.id == rule_id,
+                    SmartPayRule.status == "CONDITION_SUBMITTED"
+                )
+                .values(status="NEEDS_REVIEW")
+            )
+
+            assert changed.rowcount == 1
+            db.commit()
+
+            return {
+                "recommendation": "APPROVE",
+                "confidence": 0.95,
+                "analysis": "Outdated AI result"
+            }
+
+        monkeypatch.setattr(
+            ai_review,
+            "ai_review_submission",
+            fake_ai_review
+        )
+
+        with pytest.raises(HTTPException) as error:
+            ai_review.review_smartpay_submission(
+                rule_id=rule_id,
+                x_approval_token=os.environ["APPROVAL_TOKEN"],
+                db=db
+            )
+
+        assert error.value.status_code == 409
+
+    with SessionLocal() as db:
+        rule = db.get(SmartPayRule, rule_id)
+
+        latest_submission = db.scalar(
+            select(Submission)
+            .where(Submission.rule_id == rule_id)
+            .order_by(Submission.id.desc())
+            .limit(1)
+        )
+
+        assert rule.status == "NEEDS_REVIEW"
+        assert latest_submission.ai_recommendation is None
