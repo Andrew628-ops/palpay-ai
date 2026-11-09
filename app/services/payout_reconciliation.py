@@ -61,51 +61,76 @@ def reconcile_payout(db: Session, payout: PayoutRecord):
     if not isinstance(batch_status, str) or not isinstance(item_status, str):
         raise ValueError("Missing PayPal payout status")
 
-    payout.paypal_batch_status = batch_status
-    payout.paypal_item_status = item_status
-
-    # Mark paid only when both statuses confirm success
     
+    # Preserve the previous states before making changes.
+    previous_rule_status = rule.status
+    previous_payout_status = payout.status
+
+    reversal_statuses = {
+        "PAYOUT_REFUNDED",
+        "PAYOUT_RETURNED",
+        "PAYOUT_REVERSED",
+    }
+
+    # A confirmed reversal cannot be overwritten
+    # by an outdated successful-payment response.
     if batch_status == "SUCCESS" and item_status == "SUCCESS":
+        if (
+            previous_rule_status in reversal_statuses
+            or previous_payout_status in reversal_statuses
+        ):
+            raise ValueError(
+                "Cannot overwrite a recorded payment reversal"
+            )
+
         payout.status = "PAYOUT_COMPLETED"
         rule.status = "PAID"
 
-    elif item_status == "FAILED":
-        if rule.status == "PAID":
-            raise ValueError(
-                "Unexpected failed status for an already paid rule"
-            )
-
-        
-    if item_status == "REFUNDED":
+    elif item_status == "REFUNDED":
         payout.status = "PAYOUT_REFUNDED"
         rule.status = "PAYOUT_REFUNDED"
-    
+
     elif item_status == "RETURNED":
         payout.status = "PAYOUT_RETURNED"
         rule.status = "PAYOUT_RETURNED"
-    
+
     elif item_status == "FAILED":
-        if rule.status == "PAID":
+        protected_statuses = {
+            "PAID",
+            "PAYOUT_COMPLETED",
+            *reversal_statuses,
+        }
+
+        if (
+            previous_rule_status in protected_statuses
+            or previous_payout_status in protected_statuses
+        ):
             raise ValueError(
-                "Unexpected failure for an already paid rule"
+                "Unexpected failed status for a confirmed payment"
             )
-    
+
         payout.status = "PAYOUT_FAILED"
         rule.status = "PAYOUT_FAILED"
-    
-    elif batch_status == "SUCCESS" and item_status == "SUCCESS":
-        if rule.status in {"PAYOUT_REFUNDED", "PAYOUT_RETURNED"}:
-            raise ValueError(
-                "Cannot overwrite a recorded reversal with success"
-            )
-    
-        payout.status = "PAYOUT_COMPLETED"
-        rule.status = "PAID"
 
+    elif item_status in {
+        "PENDING",
+        "UNCLAIMED",
+        "ONHOLD",
+        "SUCCESS",
+    }:
+        # Intermediate status: do not overwrite
+        # an already confirmed or reversed payment.
+        pass
 
+    else:
+        raise ValueError(
+            f"Unsupported PayPal item status: {item_status}"
+        )
 
-    # Do not commit here. The caller owns the transaction.
+    # Save verified PayPal details after validation.
+    payout.paypal_batch_status = batch_status
+    payout.paypal_item_status = item_status
+
     return {
         "rule_id": rule.id,
         "status": rule.status,
