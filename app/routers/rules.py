@@ -78,7 +78,11 @@ def resubmit_evidence(
         .where(
             SmartPayRule.id == rule_id,
             SmartPayRule.status.in_(
-                ("NEEDS_REVIEW", "AI_REJECTED")
+                (
+                    "NEEDS_REVIEW",
+                    "AI_REJECTED",
+                    "EVIDENCE_REQUESTED",
+                )
             )
         )
         .values(status="CONDITION_SUBMITTED")
