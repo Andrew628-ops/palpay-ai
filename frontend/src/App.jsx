@@ -38,6 +38,7 @@ const REVIEW_STATUSES = [
   "NEEDS_REVIEW",
   "AI_REJECTED",
   "AWAITING_USER_APPROVAL",
+  "EVIDENCE_REQUESTED",
 ];
 
 const TRACKING_STATUSES = [
@@ -291,9 +292,11 @@ function App() {
         {/* IMPROVED EVIDENCE RESUBMISSION */}
         {activePage === "reviews" &&
           rule &&
-          ["NEEDS_REVIEW", "AI_REJECTED"].includes(
-            rule.status
-          ) && (
+          [
+            "NEEDS_REVIEW",
+            "AI_REJECTED",
+            "EVIDENCE_REQUESTED",
+          ].includes(rule.status) && (
             <EvidenceResubmissionForm
               key={rule.id}
               rule={rule}
