@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Numeric, Text
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Numeric, Text, UniqueConstraint
 from datetime import datetime, timezone
 
 from app.database import Base
@@ -104,3 +104,42 @@ class PayPalWebhookEvent(Base):
     )
     processing_started_at = Column(DateTime, nullable=True)
     processing_token = Column(String, nullable=True)
+
+
+class HumanReviewDecision(Base):
+    __tablename__ = "human_review_decisions"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "submission_id",
+            name="uq_human_review_submission"
+        ),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    rule_id = Column(
+        Integer,
+        ForeignKey("smart_pay_rules.id"),
+        nullable=False,
+        index=True
+    )
+
+    submission_id = Column(
+        Integer,
+        ForeignKey("smart_pay_submissions.id"),
+        nullable=False,
+        index=True
+    )
+
+    decision = Column(String, nullable=False)
+
+    reason = Column(Text, nullable=False)
+
+    reviewer_id = Column(String, nullable=False)
+
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False
+    )
