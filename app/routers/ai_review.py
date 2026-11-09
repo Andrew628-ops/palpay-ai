@@ -9,6 +9,7 @@ import secrets
 from dotenv import load_dotenv
 from fastapi import Header
 from sqlalchemy import update
+from app.routers.payouts import verify_approval_token
 
 load_dotenv()
 
@@ -16,7 +17,10 @@ router = APIRouter()
 
 
 @router.post("/smartpay/{rule_id}/ai-review", response_model=AIReviewResponse)
-def review_smartpay_submission(rule_id: int, db=Depends(get_db)):
+def review_smartpay_submission(rule_id: int, x_approval_token: str | None = Header(default=None),
+    db=Depends(get_db)
+):
+    verify_approval_token(x_approval_token)
     query = select(SmartPayRule).where(SmartPayRule.id == rule_id)
     smart_pay = db.scalar(query)
 
@@ -44,21 +48,54 @@ def review_smartpay_submission(rule_id: int, db=Depends(get_db)):
         file_url=submission.file_url
     )
 
+    
+    recommendation = result["recommendation"]
+
+    status_map = {
+        "APPROVE": "AWAITING_USER_APPROVAL",
+        "REJECT": "AI_REJECTED",
+    }
+
+    new_status = status_map.get(
+        recommendation,
+        "NEEDS_REVIEW"
+    )
+
+    # Only one request can successfully transition
+    # the rule out of CONDITION_SUBMITTED.
+    statement = (
+        update(SmartPayRule)
+        .where(
+            SmartPayRule.id == rule_id,
+            SmartPayRule.status == "CONDITION_SUBMITTED"
+        )
+        .values(
+            status=new_status,
+            ai_confidence=result["confidence"]
+        )
+    )
+
+    transition = db.execute(statement)
+
+    if transition.rowcount != 1:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "AI review already processed "
+                "or rule status changed"
+            )
+        )
+
+    # Save the analysis only if the status transition
+    # was successful.
     submission.ai_analysis = result["analysis"]
-    submission.ai_recommendation = result["recommendation"]
+    submission.ai_recommendation = recommendation
 
-    smart_pay.ai_confidence = result["confidence"]
-
-    if result["recommendation"] == "APPROVE":
-        smart_pay.status = "AWAITING_USER_APPROVAL"
-
-    elif result["recommendation"] == "REJECT":
-        smart_pay.status = "AI_REJECTED"
-
-    else:
-        smart_pay.status = "NEEDS_REVIEW"
-
+    # Save the rule transition and AI analysis together.
     db.commit()
+
 
     return {
         "recommendation": result["recommendation"],
@@ -104,6 +141,8 @@ def approve_smartpay(rule_id: int, x_approval_token: str | None = Header(default
     submission_query = (
         select(Submission)
         .where(Submission.rule_id == rule_id)
+        .order_by(Submission.id.desc())
+        .limit(1)
     )
 
     submission = db.scalar(submission_query)
