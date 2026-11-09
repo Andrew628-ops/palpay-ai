@@ -1,5 +1,5 @@
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -128,3 +128,58 @@ def record_human_review(
     db.refresh(review)
 
     return review
+
+
+@router.get("/{rule_id}/human-decisions")
+def get_human_review_history(
+    rule_id: int,
+    limit: int = Query(default=20, ge=1, le=100),
+    x_approval_token: str | None = Header(default=None),
+    db: Session = Depends(get_db),
+):
+    # 1. Verify the Sandbox operator token.
+    verify_approval_token(x_approval_token)
+
+    # 2. Check whether the rule exists.
+    rule = db.get(SmartPayRule, rule_id)
+
+    if rule is None:
+        raise HTTPException(
+            status_code=404,
+            detail="SmartPay rule not found"
+        )
+
+    # 3. Retrieve the latest human decisions.
+    statement = (
+        select(HumanReviewDecision)
+        .where(HumanReviewDecision.rule_id == rule_id)
+        .order_by(
+            HumanReviewDecision.created_at.desc(),
+            HumanReviewDecision.id.desc()
+        )
+        .limit(limit)
+    )
+
+    decisions = db.scalars(statement).all()
+
+    # 4. Build the response.
+    history = []
+
+    for review in decisions:
+        history.append({
+            "decision_id": review.id,
+            "submission_id": review.submission_id,
+            "decision": review.decision,
+            "reason": review.reason,
+            "reviewer_id": review.reviewer_id,
+            "created_at": (
+                review.created_at.isoformat()
+                if review.created_at else None
+            )
+        })
+
+    return {
+        "rule_id": rule_id,
+        "count": len(history),
+        "decisions": history
+    }
