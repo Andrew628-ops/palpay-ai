@@ -1,0 +1,83 @@
+
+.human-review-card {
+  margin-top: 24px;
+}
+
+.human-review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.human-review-form label {
+  font-weight: 600;
+  color: #334155;
+}
+
+.human-review-form input,
+.human-review-form select,
+.human-review-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.human-review-form textarea {
+  resize: vertical;
+}
+
+.human-review-form button {
+  align-self: flex-start;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.human-review-form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.human-review-warning {
+  color: #b45309;
+  font-size: 14px;
+}
+
+.human-review-error {
+  color: #dc2626;
+  margin-top: 12px;
+}
+
+.human-review-success {
+  color: #15803d;
+  margin-top: 12px;
+}
+
+.human-review-history {
+  margin-top: 24px;
+}
+
+.human-review-history-item {
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  margin-top: 14px;
+}
+
+.human-review-history-item h4 {
+  margin-top: 0;
+  color: #1e293b;
+}
+
+.human-review-history-item p {
+  margin: 8px 0;
+  overflow-wrap: anywhere;
+}
