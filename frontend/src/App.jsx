@@ -13,6 +13,9 @@ import PaymentHistory from "./components/PaymentHistory";
 import DashboardAnalytics from "./components/DashboardAnalytics";
 import ReviewQueue from "./components/ReviewQueue";
 import SubmissionHistory from "./components/SubmissionHistory";
+import HumanReviewDecision from "./components/HumanReviewDecision";
+import HumanDecisionHistory from "./components/HumanDecisionHistory";
+import PaymentProgress from "./components/PaymentProgress";
 
 const PAGES = {
   dashboard: {
@@ -277,6 +280,14 @@ function App() {
             />
           )}
 
+          {/* PAYMENT PROGRESS TIMELINE */}
+          {rule && (
+            <PaymentProgress
+              key={rule.id}
+              status={rule.status}
+            />
+          )}
+          
         {/* GEMINI AI REVIEW */}
         {showRuleLookup &&
           rule?.status === "CONDITION_SUBMITTED" && (
@@ -289,11 +300,28 @@ function App() {
             />
           )}
 
+        {/* SUBMISSION HISTORY */}
+        {activePage === "reviews" && rule && (
+          <SubmissionHistory
+            key={`${rule.id}-${rule.status}`}
+            ruleId={rule.id}
+          />
+        )}
+
+        {/* HUMAN EVIDENCE REVIEW */}
+        {activePage === "reviews" &&
+          rule?.status === "NEEDS_REVIEW" && (
+            <HumanReviewDecision
+              key={rule.id}
+              rule={rule}
+              onDecided={() => refreshRule(rule.id)}
+            />
+          )}
+
         {/* IMPROVED EVIDENCE RESUBMISSION */}
         {activePage === "reviews" &&
           rule &&
           [
-            "NEEDS_REVIEW",
             "AI_REJECTED",
             "EVIDENCE_REQUESTED",
           ].includes(rule.status) && (
@@ -306,9 +334,10 @@ function App() {
             />
           )}
 
-        {/* SUBMISSION HISTORY */}
+        
+        {/* HUMAN DECISION HISTORY */}
         {activePage === "reviews" && rule && (
-          <SubmissionHistory
+          <HumanDecisionHistory
             key={`${rule.id}-${rule.status}`}
             ruleId={rule.id}
           />
