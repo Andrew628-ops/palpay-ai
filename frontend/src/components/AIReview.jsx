@@ -1,47 +1,77 @@
 
-import { useState } from 'react'
+import { useState } from "react";
 
 function AIReview({ rule, onReviewed }) {
-  const [result, setResult] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [token, setToken] = useState("");
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const canReview = rule.status === 'CONDITION_SUBMITTED'
+  const canReview = rule.status === "CONDITION_SUBMITTED";
 
-  async function handleReview() {
-    if (!canReview || loading) return
+  async function handleReview(event) {
+    event.preventDefault();
 
-    setLoading(true)
-    setError('')
-    setResult(null)
+    if (!canReview || loading || !token.trim()) {
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    setResult(null);
 
     try {
       const response = await fetch(
         `/api/rules/smartpay/${rule.id}/ai-review`,
-        { method: 'POST' }
-      )
+        {
+          method: "POST",
+          headers: {
+            "x-approval-token": token.trim(),
+          },
+        }
+      );
 
-      const data = await response.json()
+      const data = await response.json().catch(() => null);
 
       if (!response.ok) {
         throw new Error(
-          typeof data.detail === 'string'
+          typeof data?.detail === "string"
             ? data.detail
-            : 'AI review failed'
-        )
+            : `AI review failed (HTTP ${response.status})`
+        );
       }
 
-      setResult(data)
+      setResult(data);
 
-      // Refresh the rule's status in the dashboard
-      await onReviewed?.()
+      // Refresh the dashboard after a successful review.
+      try {
+        await onReviewed?.();
+      } catch {
+        setError(
+          "AI review completed, but the dashboard " +
+          "could not refresh. Reload the page."
+        );
+      }
 
     } catch (err) {
-      setError(err.message)
+      setError(err.message || "Something went wrong");
     } finally {
-      setLoading(false)
+      // Do not retain the token after the request.
+      setToken("");
+      setLoading(false);
     }
   }
+
+  const confidence = Number(result?.confidence);
+
+  const confidencePercentage =
+    Number.isFinite(confidence) &&
+    confidence >= 0 &&
+    confidence <= 100
+      ? confidence <= 1
+        ? confidence * 100
+        : confidence
+      : null;
 
   return (
     <section className="ai-review-section">
@@ -53,13 +83,33 @@ function AIReview({ rule, onReviewed }) {
       </p>
 
       {canReview && (
-        <button
-          type="button"
-          onClick={handleReview}
-          disabled={loading}
-        >
-          {loading ? 'Analyzing Evidence...' : 'Run AI Review'}
-        </button>
+        <form onSubmit={handleReview}>
+          <label htmlFor={`ai-review-token-${rule.id}`}>
+            Demo Operator Token
+          </label>
+
+          <input
+            id={`ai-review-token-${rule.id}`}
+            type="password"
+            value={token}
+            onChange={(event) =>
+              setToken(event.target.value)
+            }
+            placeholder="Enter your demo approval token"
+            autoComplete="off"
+            required
+            disabled={loading}
+          />
+
+          <button
+            type="submit"
+            disabled={loading || !token.trim()}
+          >
+            {loading
+              ? "Analyzing Evidence..."
+              : "Run AI Review"}
+          </button>
+        </form>
       )}
 
       {loading && (
@@ -83,10 +133,12 @@ function AIReview({ rule, onReviewed }) {
             <span>{result.recommendation}</span>
           </p>
 
-          <p>
-            <strong>Confidence: </strong>
-            {(result.confidence * 100).toFixed(0)}%
-          </p>
+          {confidencePercentage !== null && (
+            <p>
+              <strong>Confidence: </strong>
+              {confidencePercentage.toFixed(0)}%
+            </p>
+          )}
 
           <p>
             <strong>AI Analysis:</strong>
@@ -98,12 +150,12 @@ function AIReview({ rule, onReviewed }) {
 
       {!canReview && !result && (
         <p>
-          Current payment status:
-          {' '}{rule.status.replaceAll('_', ' ')}
+          Current payment status:{" "}
+          {rule.status.replaceAll("_", " ")}
         </p>
       )}
     </section>
-  )
+  );
 }
 
-export default AIReview
+export default AIReview;
