@@ -124,7 +124,7 @@ function AIReview({ rule, onReviewed }) {
         </p>
       )}
 
-      {result && (
+      {result && !canReview && (
         <div className="ai-result">
           <h3>AI Review Result</h3>
 
@@ -145,6 +145,11 @@ function AIReview({ rule, onReviewed }) {
           </p>
 
           <p>{result.analysis}</p>
+
+          <p className="ai-advisory">
+            This recommendation assesses the submitted description.
+            It is not independent verification of the work or permission to pay.
+          </p>
         </div>
       )}
 
