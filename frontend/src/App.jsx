@@ -16,6 +16,7 @@ import SubmissionHistory from "./components/SubmissionHistory";
 import HumanReviewDecision from "./components/HumanReviewDecision";
 import HumanDecisionHistory from "./components/HumanDecisionHistory";
 import PaymentProgress from "./components/PaymentProgress";
+import RecentPaymentActivity from "./components/RecentPaymentActivity";
 
 const PAGES = {
   dashboard: {
@@ -161,6 +162,13 @@ function App() {
         {/* DASHBOARD ANALYTICS */}
         {activePage === "dashboard" && (
           <DashboardAnalytics />
+        )}
+
+        {/* RECENT PAYPAL SANDBOX ACTIVITY */}
+        {activePage === "dashboard" && (
+          <RecentPaymentActivity
+            onViewAll={() => setActivePage("payments")}
+          />
         )}
 
         {/* CREATE SMARTPAY RULE */}
