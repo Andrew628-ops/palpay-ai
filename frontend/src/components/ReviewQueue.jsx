@@ -66,6 +66,7 @@ export default function ReviewQueue({ onSelectRule }) {
           value={token}
           onChange={(event) => setToken(event.target.value)}
           placeholder="Enter demo approval token"
+          aria-label="Operator token for review queue"
           autoComplete="off"
           required
         />
