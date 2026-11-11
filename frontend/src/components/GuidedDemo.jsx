@@ -4,24 +4,76 @@ import Icon from "./Icon";
 const STEPS = ["The agreement", "Delivery evidence", "AI recommendation", "Your approval", "Payment receipt"];
 const CONDITIONS = ["Landing page delivered", "Responsive layout on mobile", "Client accepts the final design"];
 
+function narrationFor(step, scenario, confirmed) {
+  return [
+    "Welcome to the PalPay AI walkthrough. This example pays Sarah Johnson five hundred US dollars for a landing page. Payment requires delivery, a responsive mobile layout, and client acceptance. All data and results in this walkthrough are simulated.",
+    scenario === "complete" ? "The complete delivery includes desktop and mobile testing, plus the client's acceptance. Select See sample review to continue, or choose missing mobile checks to explore an incomplete delivery." : "This delivery is missing mobile testing and client acceptance. Select See sample review to see why payment should stay paused.",
+    scenario === "complete" ? "The sample evidence addresses all three release conditions. The AI recommendation is ready for human review. You make the final payment decision." : "More evidence is needed. Mobile testing and client acceptance are missing, so payment stays paused. Revise the evidence to continue.",
+    "Review Sarah's sample receiver and the five hundred dollar payout. Check the approval box to authorize the simulated payout, then select Simulate payout.",
+    confirmed ? "The simulated payment is confirmed. The walkthrough is complete and your live agreements have not changed. You can now create a real agreement." : "The simulated payout has been submitted and is awaiting confirmation. Submission and confirmation are separate states. Select Simulate PayPal confirmation to finish the example.",
+  ][step];
+}
+
 export default function GuidedDemo({ onClose, onStart }) {
   const dialogRef = useRef(null);
   const [step, setStep] = useState(0);
   const [scenario, setScenario] = useState("complete");
   const [approved, setApproved] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
+  const [audioError, setAudioError] = useState("");
+  const utteranceRef = useRef(null);
+  const audioSupported = typeof window !== "undefined" && "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+
+  function stopNarration() {
+    utteranceRef.current = null;
+    if (audioSupported) window.speechSynthesis.cancel();
+    setSpeaking(false);
+  }
+
+  function playNarration() {
+    stopNarration();
+    setAudioError("");
+    const utterance = new SpeechSynthesisUtterance(narrationFor(step, scenario, confirmed));
+    utterance.lang = "en-US";
+    utterance.rate = 0.95;
+    utteranceRef.current = utterance;
+    utterance.onend = () => { if (utteranceRef.current === utterance) { utteranceRef.current = null; setSpeaking(false); } };
+    utterance.onerror = () => {
+      if (utteranceRef.current !== utterance) return;
+      utteranceRef.current = null;
+      setSpeaking(false);
+      setAudioError("Narration could not play. Check your device audio and try again.");
+    };
+    setSpeaking(true);
+    window.speechSynthesis.speak(utterance);
+  }
+
+  useEffect(() => {
+    return () => {
+      utteranceRef.current = null;
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+      setSpeaking(false);
+    };
+  }, [step, scenario, confirmed]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
-    dialog.showModal();
+    if (!dialog.open) dialog.showModal();
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = previousOverflow; dialog.close(); };
+    // React StrictMode replays effects. Closing here queues a close event that
+    // would dismiss the newly opened walkthrough during that replay.
+    return () => { document.body.style.overflow = previousOverflow; };
   }, []);
 
   return <dialog className="demo-dialog" ref={dialogRef} onClose={onClose} aria-labelledby="demo-title" onClick={event => { if (event.target === event.currentTarget) dialogRef.current.close(); }}>
     <div className="demo-top"><span className="eyebrow"><Icon name="play" size={13} /> INTERACTIVE WALKTHROUGH</span><button className="icon-button" type="button" aria-label="Close walkthrough" onClick={() => dialogRef.current.close()}><Icon name="close" /></button></div>
     <h2 id="demo-title">One agreement. A clear path to payment.</h2><p className="demo-disclaimer">Sample data and scripted results. No AI or PayPal API calls are made.</p>
+    <div className="demo-audio">
+      <button className="secondary-button" type="button" disabled={!audioSupported} onClick={speaking ? stopNarration : playNarration}>{speaking ? "Stop narration" : "Play step narration"}</button>
+      <p className="demo-helper" role="status">{!audioSupported ? "Audio narration is unavailable in this browser. Follow the written steps below." : audioError || "Listen to this step using your browser’s voice."}</p>
+    </div>
     <ol className="demo-steps">{STEPS.map((label, index) => <li key={label} className={index < step ? "complete" : index === step ? "current" : ""} aria-current={index === step ? "step" : undefined}><span>{index < step ? <Icon name="check" size={13} /> : index + 1}</span><small>{label}</small></li>)}</ol>
     <div className="demo-body" aria-live="polite">
       {step === 0 && <><div className="demo-person"><span className="avatar avatar-0">SJ</span><div><strong>Landing page design</strong><small>Sarah Johnson · Freelance designer</small></div><strong className="demo-amount">$500 <small>USD</small></strong></div><div className="demo-quote">“Pay Sarah $500 when the landing page is delivered, works on mobile, and I approve the design.”</div><span className="field-caption">THE RELEASE CONDITIONS</span><ul className="condition-checklist">{CONDITIONS.map((condition, index) => <li key={condition}><span>{index + 1}</span>{condition}</li>)}</ul><div className="inline-note"><Icon name="info" size={17} /><p>In the workspace, you define these conditions. Gemini reviews submitted evidence against them.</p></div></>}
