@@ -504,3 +504,58 @@ button:disabled {
   outline: 2px solid #ffffff;
   outline-offset: 2px;
 }
+
+
+/* Compact mobile layout */
+
+@media (max-width: 768px) {
+  .app-layout {
+    display: block;
+    width: 100%;
+  }
+
+  .sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+    flex: none;
+    padding: 16px;
+    box-sizing: border-box;
+  }
+
+  .sidebar h2 {
+    margin: 0 0 4px;
+  }
+
+  .sidebar > p {
+    margin: 0 0 12px;
+  }
+
+  .sidebar-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .sidebar-nav button {
+    width: 100%;
+    min-width: 0;
+    padding: 12px 8px;
+    text-align: center;
+    border-radius: 8px;
+  }
+
+  .main-content {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin-left: 0;
+    padding: 16px;
+    box-sizing: border-box;
+  }
+
+  /* Avoid duplicate navigation menus */
+  .mobile-page-nav {
+    display: none;
+  }
+}
