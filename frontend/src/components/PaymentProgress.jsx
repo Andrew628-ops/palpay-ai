@@ -4,7 +4,7 @@ import "./PaymentProgress.css";
 const STEPS = [
   "Rule Created",
   "Evidence Submitted",
-  "Evidence Verified",
+  "AI Recommends",
   "Payment Authorized",
   "Payout Submitted",
   "Payment Confirmed",
