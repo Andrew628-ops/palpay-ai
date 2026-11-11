@@ -1,4 +1,38 @@
+
+# Environment variables and secrets
 .env
+.env.*
+!.env.example
+
+# Python virtual environments
 venv/
+.venv/
+
+# Python cache
 __pycache__/
 *.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local databases
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+
+# Frontend dependencies and builds
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+
+# Logs
+*.log
+
+# Local configuration
+ngrok.yml
+
+# Operating system files
+.DS_Store
+Thumbs.db
