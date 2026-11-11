@@ -84,6 +84,7 @@ export default function PaymentHistory() {
           value={token}
           onChange={(event) => setToken(event.target.value)}
           placeholder="Enter demo approval token"
+          aria-label="Operator token for payment history"
           autoComplete="off"
           required
         />
@@ -109,6 +110,7 @@ export default function PaymentHistory() {
                 setSearch(event.target.value)
               }
               placeholder="Search payments..."
+              aria-label="Search payment history"
             />
           </div>
 
