@@ -27,23 +27,33 @@ app.include_router(submission_history_router, prefix="/api/rules", tags=["smartp
 app.include_router(human_review_router, prefix="/api/reviews", tags=["Human Review"])
 
 
+
 @app.middleware("http")
 async def public_demo_protection(request: Request, call_next):
-    read_only = os.getenv("DEMO_READ_ONLY", "false").lower() == "true"
+    import re
 
+    read_only = os.getenv("DEMO_READ_ONLY", "false").lower() == "true"
     path = request.url.path.rstrip("/")
 
-    # Allow judges to create demo agreements
-    allow_agreement_creation = (
+    allow_creation = (
         request.method == "POST"
         and path == "/api/rules/smartpay"
+    )
+
+    allow_submission = (
+        request.method == "POST"
+        and re.fullmatch(
+            r"/api/rules/smartpay/\d+/submit",
+            path
+        ) is not None
     )
 
     if (
         read_only
         and path.startswith("/api/")
         and request.method not in {"GET", "HEAD", "OPTIONS"}
-        and not allow_agreement_creation
+        and not allow_creation
+        and not allow_submission
     ):
         return JSONResponse(
             status_code=403,
@@ -53,6 +63,7 @@ async def public_demo_protection(request: Request, call_next):
         )
 
     return await call_next(request)
+
 
 
 frontend_dist = (
