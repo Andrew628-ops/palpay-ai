@@ -8,13 +8,13 @@ PalPay AI is a full-stack hackathon prototype that connects an agreed payment co
 
 ## Live demo and source code
 
-- **Hosted application:** `https://palpay-ai-demo.onrender.com/`
-- **Source code:** https://github.com/Andrew628-ops/palpay-ai
-- **Demo video:** `https://youtu.be/4-c8gfiBzzY`
+- **Hosted application:** [Open the live application](https://palpay-ai-demo.onrender.com/)
+- **Source code:** [GitHub repository](https://github.com/Andrew628-ops/palpay-ai)
+- **Demo video:** [Watch the demo video](https://youtu.be/4-c8gfiBzzY)
 
 ### What works in the hosted demo?
 
-The hosted Render deployment uses **FastAPI + React + PostgreSQL**. Its public demo configuration enables agreement creation and evidence submission. AI review is protected by an operator token. Payment approval, payout submission, and status-changing operations are restricted in the public environment by `DEMO_READ_ONLY=true`.
+The hosted Render deployment uses **FastAPI + React + PostgreSQL**. Its restricted public demo configuration enables test agreement creation and evidence submission with fictional data. AI review is protected by an operator token. Operator-only payment authorization, PayPal payout execution, and payment-status refresh remain blocked in the public environment by `DEMO_READ_ONLY=true` and the deployment middleware. The AI-review endpoint also requires an operator token.
 
 **Want to test the complete, real Sandbox workflow?** Clone the repository and configure your **own Gemini API key, PayPal Sandbox credentials, and operator token**. The local application uses the actual human-authorization and PayPal Sandbox payout logic; it does **not** replace those operations with a fake payment simulation.
 
@@ -141,23 +141,19 @@ source venv/bin/activate             # Linux / macOS
 python -m pip install -r requirements.txt
 ```
 
-Create a `.env` file in the repository root. **Use only credentials from your own developer accounts.** You may omit `DATABASE_URL` to use the local SQLite default configured in `app/database.py`.
+Create a `.env` file in the repository root. **Use only credentials from your own developer accounts.** Delete or comment out the `DATABASE_URL` line to use the local SQLite default configured in `app/database.py`, or replace it with your own valid database URL.
 
 ```dotenv
 # Optional local database override:
 # DATABASE_URL=sqlite:////absolute/path/to/palpay-ai/palpay.db
-
 # Generate a strong value with: python -c "import secrets; print(secrets.token_urlsafe(32))"
 APPROVAL_TOKEN=replace-with-your-private-random-token
-
 GEMINI_API_KEY=your-gemini-api-key
-
 PAYPAL_BASE_URL=https://api-m.sandbox.paypal.com
 PAYPAL_CLIENT_ID=your-sandbox-client-id
 PAYPAL_CLIENT_SECRET=your-sandbox-client-secret
 PAYPAL_SANDBOX_RECEIVER_EMAIL=your-sandbox-receiver@example.com
 PAYPAL_WEBHOOK_ID=your-sandbox-webhook-id
-
 # Full local Sandbox workflow. Do not use this setting on an unrestricted public service.
 DEMO_READ_ONLY=false
 ```
@@ -286,3 +282,7 @@ During development, a small PayPal **Sandbox** payout was successfully confirmed
 **PalPay AI is a deployed, working hackathon Sandbox MVP**, with a React/FastAPI interface, Gemini evidence-review workflow, human oversight, and genuine PayPal **Sandbox** integration. The hosted demo is intentionally restricted; developers who configure their own test credentials can explore the full workflow locally.
 
 Built for the **Build What's Next with PayPal and AI** hackathon.
+
+## License
+
+Released under the [MIT License](LICENSE). See the repository `LICENSE` file for the full terms.
