@@ -1,4 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+import os
+from fastapi.responses import JSONResponse
 from app.database import engine
 from app.models import Base
 Base.metadata.create_all(bind=engine)
@@ -24,6 +26,23 @@ app.include_router(review_queue_router, prefix="/api/reviews", tags=["AI Review 
 app.include_router(submission_history_router, prefix="/api/rules", tags=["smartpay"])
 app.include_router(human_review_router, prefix="/api/reviews", tags=["Human Review"])
 
+@app.middleware("http")
+async def public_demo_protection(request: Request, call_next):
+    read_only = os.getenv("DEMO_READ_ONLY") == "true"
+
+    if (
+        read_only
+        and request.url.path.startswith("/api/")
+        and request.method not in {"GET", "HEAD", "OPTIONS"}
+    ):
+        return JSONResponse(
+            status_code=403,
+            content={
+                "detail": "Public demo is read-only."
+            }
+        )
+
+    return await call_next(request)
 
 frontend_dist = (
     Path(__file__).resolve().parent.parent
