@@ -1,0 +1,101 @@
+
+.demo-simulator {
+  background: #101d32;
+  border: 1px solid #2c4465;
+  border-radius: 16px;
+  padding: 24px;
+  color: #dce8fb;
+  margin-top: 20px;
+}
+
+.demo-simulator h2 {
+  color: #ffffff;
+  margin: 12px 0;
+}
+
+.demo-simulator-label {
+  color: #93c5fd;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.demo-simulator-details {
+  background: #1b2c48;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 18px 0;
+}
+
+.demo-simulator-stages {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+}
+
+.demo-simulator-stages li {
+  border: 1px solid #344861;
+  padding: 14px;
+  border-radius: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.demo-simulator-stages li.completed {
+  background: #15372f;
+  border-color: #26775a;
+}
+
+.demo-simulator-stages li span {
+  font-weight: 700;
+}
+
+.demo-simulator-message {
+  padding: 14px;
+  background: #1b2c48;
+  border-radius: 10px;
+}
+
+.demo-simulator-button {
+  padding: 13px 20px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.demo-simulator-button:hover {
+  background: #2563eb;
+}
+
+.demo-simulator-reset {
+  margin: 12px;
+  background: transparent;
+  border: 1px solid #64748b;
+  color: #dce8fb;
+  padding: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.demo-simulator-success {
+  color: #86efac;
+  font-weight: 700;
+}
+
+.demo-simulator small {
+  display: block;
+  margin-top: 16px;
+  color: #9fb1cc;
+}
+
+@media (max-width: 650px) {
+  .demo-simulator-stages {
+    grid-template-columns: 1fr;
+  }
+}
