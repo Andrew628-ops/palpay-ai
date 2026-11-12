@@ -26,23 +26,34 @@ app.include_router(review_queue_router, prefix="/api/reviews", tags=["AI Review 
 app.include_router(submission_history_router, prefix="/api/rules", tags=["smartpay"])
 app.include_router(human_review_router, prefix="/api/reviews", tags=["Human Review"])
 
+
 @app.middleware("http")
 async def public_demo_protection(request: Request, call_next):
-    read_only = os.getenv("DEMO_READ_ONLY") == "true"
+    read_only = os.getenv("DEMO_READ_ONLY", "false").lower() == "true"
+
+    path = request.url.path.rstrip("/")
+
+    # Allow judges to create demo agreements
+    allow_agreement_creation = (
+        request.method == "POST"
+        and path == "/api/rules/smartpay"
+    )
 
     if (
         read_only
-        and request.url.path.startswith("/api/")
+        and path.startswith("/api/")
         and request.method not in {"GET", "HEAD", "OPTIONS"}
+        and not allow_agreement_creation
     ):
         return JSONResponse(
             status_code=403,
             content={
-                "detail": "Public demo is read-only."
+                "detail": "This action is disabled in the public demo."
             }
         )
 
     return await call_next(request)
+
 
 frontend_dist = (
     Path(__file__).resolve().parent.parent
