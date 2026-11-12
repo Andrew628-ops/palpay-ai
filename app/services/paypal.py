@@ -77,9 +77,34 @@ def create_sandbox_payout(receiver_email: str, amount: float, currency: str, sen
         timeout=30.0
     )
 
-    response.raise_for_status()
-    return response.json()
+    try:
+        response.raise_for_status()
 
+    except httpx.HTTPStatusError as error:
+        print("\n--- PAYPAL SANDBOX PAYOUT ERROR ---")
+        print("HTTP Status:", error.response.status_code)
+
+        try:
+            details = error.response.json()
+        except ValueError:
+            details = {}
+
+        if not isinstance(details, dict):
+            details = {}
+
+        print("Error Name:", details.get("name", "Unknown"))
+        print("Debug ID:", details.get("debug_id", "Unavailable"))
+
+        issues = details.get("details", [])
+        if isinstance(issues, list):
+            for item in issues:
+                if isinstance(item, dict):
+                    print("Issue:", item.get("issue", "Unknown"))
+
+        print("---------------------------------\n")
+        raise
+
+    return response.json()
 
 
 def get_payout_details(paypal_batch_id: str):
