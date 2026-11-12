@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request
 import os
+import re
 from fastapi.responses import JSONResponse
 from app.database import engine
 from app.models import Base
@@ -30,30 +31,46 @@ app.include_router(human_review_router, prefix="/api/reviews", tags=["Human Revi
 
 @app.middleware("http")
 async def public_demo_protection(request: Request, call_next):
-    import re
+    read_only = (
+        os.getenv("DEMO_READ_ONLY", "false").lower() == "true"
+    )
 
-    read_only = os.getenv("DEMO_READ_ONLY", "false").lower() == "true"
     path = request.url.path.rstrip("/")
+    method = request.method
 
+    # 1. Allow judges to create agreements
     allow_creation = (
-        request.method == "POST"
+        method == "POST"
         and path == "/api/rules/smartpay"
     )
 
+    # 2. Allow judges to submit evidence
     allow_submission = (
-        request.method == "POST"
+        method == "POST"
         and re.fullmatch(
             r"/api/rules/smartpay/\d+/submit",
             path
         ) is not None
     )
 
+    # 3. Allow AI-review requests through to the endpoint
+    # The endpoint must still verify APPROVAL_TOKEN.
+    allow_ai_review = (
+        method == "POST"
+        and re.fullmatch(
+            r"/api/rules/smartpay/\d+/ai-review",
+            path
+        ) is not None
+    )
+
+    # 4. Block all other API modifications in demo mode
     if (
         read_only
         and path.startswith("/api/")
-        and request.method not in {"GET", "HEAD", "OPTIONS"}
+        and method not in {"GET", "HEAD", "OPTIONS"}
         and not allow_creation
         and not allow_submission
+        and not allow_ai_review
     ):
         return JSONResponse(
             status_code=403,
