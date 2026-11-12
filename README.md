@@ -8,9 +8,9 @@ PalPay AI is a full-stack hackathon prototype that connects an agreed payment co
 
 ## Live demo and source code
 
-- **Hosted application:** `PASTE_YOUR_RENDER_HTTPS_URL_HERE` *(replace with your real live URL before submitting)*
+- **Hosted application:** `https://palpay-ai-demo.onrender.com/`
 - **Source code:** https://github.com/Andrew628-ops/palpay-ai
-- **Demo video:** `PASTE_YOUR_YOUTUBE_DEMO_URL_HERE` *(replace before submitting)*
+- **Demo video:** `https://youtu.be/4-c8gfiBzzY`
 
 ### What works in the hosted demo?
 
