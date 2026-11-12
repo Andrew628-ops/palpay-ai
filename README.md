@@ -239,19 +239,6 @@ cd frontend
 npm run build
 ```
 
-## Suggested hackathon demo (no new payout needed)
-
-1. **Dashboard:** Load the protected analytics and show completed Sandbox volume and recent payout activity.
-2. **AI Reviews, Rule #6:** Show a rule where Gemini returned `NEEDS_REVIEW` because a responsive homepage could not be verified without supporting material.
-3. **Submission History:** Show the original submission and newer submission, each with its own AI analysis.
-4. **Human Decision History:** Show the recorded `REQUEST_MORE_EVIDENCE` decision and its reason.
-5. **Payment Progress:** Compare Rule #6 (human attention required) with Rule #3 (`PAID`).
-6. **Payments:** Show previously confirmed Sandbox payout records. Explain that PayPal confirmation comes from payout reconciliation, not from the AI recommendation.
-
-At one verified demo checkpoint, the app showed **6 rules, 3 completed Sandbox payouts, and $25.01 in completed USD Sandbox volume**. These are example local development figures, **not hardcoded product metrics**; they may change.
-
-> Demo safety: Keep your `.env`, approval token, PayPal credentials, and API secrets off-screen. Use existing payout records instead of sending new Sandbox payouts during the presentation.
-
 ## Security model and known limitations
 
 ### Implemented for the Sandbox MVP
